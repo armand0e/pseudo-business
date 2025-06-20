@@ -10,21 +10,21 @@ import asyncio
 import json
 import logging
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, is_dataclass
 from enum import Enum
 import requests
 from pathlib import Path
 
-# OpenHands integration
-from openhands.controller.state.state import State
-from openhands.core.config import AppConfig, SandboxConfig
-from openhands.core.main import create_runtime, run_controller
-from openhands.events.action import CmdRunAction, MessageAction
-from openhands.events.observation import CmdOutputObservation
-from openhands.agenthub.codeact_agent import CodeActAgent
+# # OpenHands integration
+# from openhands.controller.state.state import State
+# from openhands.core.config import AppConfig, SandboxConfig
+# from openhands.core.main import create_runtime, run_controller
+# from openhands.events.action import CmdRunAction, MessageAction
+# from openhands.events.observation import CmdOutputObservation
+# from openhands.agenthub.codeact_agent import CodeActAgent
 
 # LocalAI integration
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +59,10 @@ class SaaSRequirements:
 @dataclass
 class AgentTask:
     """Task for specialized agent"""
+    task_id: str
     agent_type: str
     task_description: str
-    dependencies: List[str]
+    dependencies: List[str] # list of task_ids
     priority: int
     estimated_time: int  # minutes
     status: str = "pending"  # pending, in_progress, completed, failed
@@ -74,7 +75,7 @@ class MasterOrchestrator:
     
     def __init__(self, config_path: str = "config/orchestrator.yml"):
         self.config = self._load_config(config_path)
-        self.local_ai_client = OpenAI(
+        self.local_ai_client = AsyncOpenAI(
             base_url="http://localhost:8080/v1",
             api_key="not-needed"
         )
@@ -118,10 +119,12 @@ class MasterOrchestrator:
         Main orchestration method to create a complete SaaS application
         """
         logger.info(f"Starting SaaS application creation: {requirements.description}")
-        
+        self.project_state = {'requirements': requirements}
+
         try:
             # Phase 1: Requirements Analysis & Architecture Design
             architecture = await self._design_architecture(requirements)
+            self.project_state['architecture'] = architecture
             
             # Phase 2: Task Decomposition
             tasks = await self._decompose_tasks(requirements, architecture)
@@ -184,7 +187,7 @@ class MasterOrchestrator:
         Format the response as JSON with clear sections.
         """
         
-        response = self.local_ai_client.chat.completions.create(
+        response = await self.local_ai_client.chat.completions.create(
             model="devstral-small-agentic",
             messages=[
                 {"role": "system", "content": "You are an expert system architect."},
@@ -195,9 +198,7 @@ class MasterOrchestrator:
         )
         
         try:
-            architecture = json.loads(response.choices[0].message.content)
-            logger.info("Architecture design completed successfully")
-            return architecture
+            return json.loads(response.choices[0].message.content)
         except json.JSONDecodeError:
             # Fallback to structured parsing
             return self._parse_architecture_response(response.choices[0].message.content)
@@ -208,202 +209,216 @@ class MasterOrchestrator:
         
         # Frontend tasks
         if "frontend" in architecture.get("components", {}):
-            tasks.extend([
-                AgentTask("frontend", "Setup project structure and build tools", [], 1, 30),
-                AgentTask("frontend", "Implement UI components", ["Setup project structure"], 2, 120),
-                AgentTask("frontend", "Integrate with backend APIs", ["Implement UI components"], 3, 60),
-                AgentTask("frontend", "Add responsive design", ["Integrate with backend APIs"], 4, 45)
-            ])
+            setup_task = AgentTask("frontend-1", "frontend", "Setup project structure and build tools", [], 1, 30)
+            ui_task = AgentTask("frontend-2", "frontend", "Implement UI components", [setup_task.task_id], 2, 120)
+            api_task = AgentTask("frontend-3", "frontend", "Integrate with backend APIs", [ui_task.task_id], 3, 60)
+            responsive_task = AgentTask("frontend-4", "frontend", "Add responsive design", [api_task.task_id], 4, 45)
+            tasks.extend([setup_task, ui_task, api_task, responsive_task])
         
         # Backend tasks
         if "backend" in architecture.get("components", {}):
-            tasks.extend([
-                AgentTask("backend", "Setup API framework", [], 1, 30),
-                AgentTask("backend", "Implement core business logic", ["Setup API framework"], 2, 180),
-                AgentTask("backend", "Add authentication & authorization", ["Implement core business logic"], 3, 90),
-                AgentTask("backend", "Implement API endpoints", ["Add authentication & authorization"], 4, 120)
-            ])
+            setup_api = AgentTask("backend-1", "backend", "Setup API framework", [], 1, 30)
+            business_logic = AgentTask("backend-2", "backend", "Implement core business logic", [setup_api.task_id], 2, 180)
+            auth_task = AgentTask("backend-3", "backend", "Add authentication & authorization", [business_logic.task_id], 3, 90)
+            endpoints_task = AgentTask("backend-4", "backend", "Implement API endpoints", [auth_task.task_id], 4, 120)
+            tasks.extend([setup_api, business_logic, auth_task, endpoints_task])
         
         # Database tasks
         if "database" in architecture.get("components", {}):
-            tasks.extend([
-                AgentTask("database", "Design database schema", [], 1, 45),
-                AgentTask("database", "Setup database with migrations", ["Design database schema"], 2, 30),
-                AgentTask("database", "Optimize queries and indexing", ["Setup database with migrations"], 3, 60)
-            ])
+            schema_task = AgentTask("database-1", "database", "Design database schema", [], 1, 45)
+            setup_db_task = AgentTask("database-2", "database", "Setup database with migrations", [schema_task.task_id], 2, 30)
+            optimize_db_task = AgentTask("database-3", "database", "Optimize queries and indexing", [setup_db_task.task_id], 3, 60)
+            tasks.extend([schema_task, setup_db_task, optimize_db_task])
         
         # DevOps tasks
-        tasks.extend([
-            AgentTask("devops", "Setup containerization", [], 2, 45),
-            AgentTask("devops", "Configure CI/CD pipeline", ["Setup containerization"], 3, 90),
-            AgentTask("devops", "Setup monitoring and logging", ["Configure CI/CD pipeline"], 4, 60)
-        ])
+        container_task = AgentTask("devops-1", "devops", "Setup containerization", [], 2, 45)
+        cicd_task = AgentTask("devops-2", "devops", "Configure CI/CD pipeline", [container_task.task_id], 3, 90)
+        monitoring_task = AgentTask("devops-3", "devops", "Setup monitoring and logging", [cicd_task.task_id], 4, 60)
+        tasks.extend([container_task, cicd_task, monitoring_task])
         
         # Testing tasks
         if self.config["enable_testing"]:
-            tasks.extend([
-                AgentTask("testing", "Setup testing framework", [], 2, 30),
-                AgentTask("testing", "Write unit tests", ["Setup testing framework"], 3, 120),
-                AgentTask("testing", "Write integration tests", ["Write unit tests"], 4, 90),
-                AgentTask("testing", "Setup E2E testing", ["Write integration tests"], 5, 60)
-            ])
-        
+            testing_deps = []
+            if "frontend-2" in [t.task_id for t in tasks]:
+                testing_deps.append("frontend-2")
+            if "backend-4" in [t.task_id for t in tasks]:
+                testing_deps.append("backend-4")
+
+            setup_test = AgentTask("testing-1", "testing", "Setup testing framework", [], 2, 30)
+            unit_test = AgentTask("testing-2", "testing", "Write unit tests", [setup_test.task_id] + testing_deps, 3, 120)
+            integration_test = AgentTask("testing-3", "testing", "Write integration tests", [unit_test.task_id], 4, 90)
+            e2e_test = AgentTask("testing-4", "testing", "Setup E2E testing", [integration_test.task_id], 5, 60)
+            tasks.extend([setup_test, unit_test, integration_test, e2e_test])
+
         # Security tasks
         if self.config["enable_security_scan"]:
-            tasks.extend([
-                AgentTask("security", "Security audit and recommendations", [], 4, 45),
-                AgentTask("security", "Implement security measures", ["Security audit and recommendations"], 5, 60)
-            ])
-        
-        return sorted(tasks, key=lambda x: x.priority)
+            security_audit = AgentTask("security-1", "security", "Security audit and recommendations", [], 4, 45)
+            implement_security = AgentTask("security-2", "security", "Implement security measures", [security_audit.task_id], 5, 60)
+            tasks.extend([security_audit, implement_security])
+
+        self.task_queue = tasks
+        return tasks
     
     async def _execute_tasks(self, tasks: List[AgentTask]) -> Dict[str, Any]:
-        """Execute tasks using specialized agents"""
+        """Execute all tasks in an order that respects dependencies."""
+        completed_tasks = set()
         results = {}
         semaphore = asyncio.Semaphore(self.config["max_concurrent_agents"])
         
-        async def execute_task(task: AgentTask):
-            async with semaphore:
-                try:
-                    agent = self.specialized_agents[task.agent_type]
-                    task.status = "in_progress"
-                    
-                    result = await agent.execute_task(
-                        task.task_description,
-                        context=self.project_state
-                    )
-                    
-                    task.status = "completed"
-                    results[f"{task.agent_type}_{task.task_description}"] = result
-                    
-                    # Update project state with result
-                    if task.agent_type not in self.project_state:
-                        self.project_state[task.agent_type] = []
-                    self.project_state[task.agent_type].append(result)
-                    
-                    logger.info(f"Completed task: {task.task_description}")
-                    
-                except Exception as e:
-                    task.status = "failed"
-                    logger.error(f"Task failed: {task.task_description} - {str(e)}")
-                    results[f"{task.agent_type}_{task.task_description}"] = {"error": str(e)}
-        
-        # Execute tasks respecting dependencies
-        completed_tasks = set()
-        
         while len(completed_tasks) < len(tasks):
-            ready_tasks = [
-                task for task in tasks 
-                if task.status == "pending" and 
-                all(dep in completed_tasks for dep in task.dependencies)
+            tasks_to_run = [
+                task for task in tasks
+                if task.status == "pending" and all(dep in completed_tasks for dep in task.dependencies)
             ]
-            
-            if not ready_tasks:
+
+            if not tasks_to_run:
+                # Handle deadlock or cycle
+                pending_tasks = [t.task_id for t in tasks if t.status == "pending"]
+                logger.error(f"Cannot execute more tasks. Check for dependency cycles. Pending tasks: {pending_tasks}")
+                # Mark remaining tasks as failed
+                for task in tasks:
+                    if task.status == "pending":
+                        task.status = "failed"
+                        results[task.task_id] = {"error": "Dependency cycle or unresolved dependency"}
                 break
-            
-            # Execute ready tasks concurrently
-            await asyncio.gather(*[execute_task(task) for task in ready_tasks])
-            
-            completed_tasks.update(
-                task.task_description for task in ready_tasks 
-                if task.status == "completed"
-            )
-        
+
+            async def execute_task(task: AgentTask):
+                async with semaphore:
+                    agent = self.specialized_agents.get(task.agent_type)
+                    if not agent:
+                        logger.error(f"No agent found for type: {task.agent_type}")
+                        task.status = "failed"
+                        results[task.task_id] = {"error": f"Agent {task.agent_type} not found."}
+                        return
+
+                    try:
+                        task.status = "in_progress"
+                        logger.info(f"Executing task: {task.task_description} with {task.agent_type} agent")
+                        
+                        context = {
+                            "requirements": self.project_state.get("requirements"),
+                            "architecture": self.project_state.get("architecture"),
+                            "dependencies_results": {dep: results.get(dep) for dep in task.dependencies}
+                        }
+                        
+                        result = await agent.execute_task(task.task_description, context)
+                        
+                        task.status = "completed"
+                        results[task.task_id] = result
+                        completed_tasks.add(task.task_id)
+                        logger.info(f"Task '{task.task_description}' completed successfully")
+
+                    except Exception as e:
+                        task.status = "failed"
+                        logger.error(f"Task '{task.task_description}' failed: {str(e)}")
+                        results[task.task_id] = {"error": str(e)}
+
+            await asyncio.gather(*(execute_task(task) for task in tasks_to_run))
+
+        if any(t.status == 'failed' for t in tasks):
+            # This is a simplification. A real implementation might have more sophisticated error handling.
+            raise Exception("One or more tasks failed. See logs for details.")
+
         return results
     
     async def _integrate_components(self, results: Dict[str, Any]) -> Dict[str, Any]:
-        """Integrate all components into a cohesive application"""
-        # Use OpenHands for integration tasks
-        integration_prompt = f"""
-        Integrate the following components into a working full-stack application:
+        """Integrate all generated code components into a final project structure."""
+        logger.info("Integrating all components into a cohesive codebase.")
         
-        Component Results:
-        {json.dumps(results, indent=2)}
+        final_codebase = {"files": {}}
+        all_dependencies = set()
+
+        for task_id, result in results.items():
+            if "files" in result:
+                for file_path, content in result["files"].items():
+                    # Simple merge, last write wins. A more sophisticated strategy may be needed.
+                    final_codebase["files"][file_path] = content
+            if "dependencies" in result:
+                all_dependencies.update(result["dependencies"])
+
+        final_codebase["dependencies"] = list(all_dependencies)
         
-        Tasks:
-        1. Ensure all components work together
-        2. Fix any integration issues
-        3. Verify API connectivity
-        4. Test data flow between components
-        5. Package the application for deployment
-        """
-        
-        # Create OpenHands agent for integration
-        config = AppConfig(
-            default_agent="CodeActAgent",
-            runtime="eventstream",
-            max_iterations=50,
-            sandbox=SandboxConfig(
-                container_image="python:3.11-bookworm",
-                enable_auto_lint=True
-            )
-        )
-        
-        runtime = await create_runtime(config)
-        agent = CodeActAgent(llm=self.local_ai_client)
-        
-        try:
-            state = State()
-            action = MessageAction(content=integration_prompt)
-            
-            # Execute integration
-            for i in range(config.max_iterations):
-                observation = await runtime.run_action(action)
-                state = state.update(action, observation)
-                
-                if observation.success:
-                    break
-                    
-                action = agent.step(state)
-            
-            return {
-                "status": "integrated",
-                "files": state.outputs,
-                "integration_log": state.history
-            }
-            
-        finally:
-            await runtime.close()
+        # Add a README file summarizing the project
+        final_codebase["files"]["README.md"] = self._generate_readme(final_codebase)
+
+        logger.info(f"Integration complete. Codebase has {len(final_codebase['files'])} files.")
+        self.project_state['codebase'] = final_codebase
+        return final_codebase
     
+    def _generate_readme(self, codebase: Dict[str, Any]) -> str:
+        """Generate a README.md for the project."""
+        readme_content = f"# {self.project_state['requirements'].description}\n\n"
+        readme_content += "This project was automatically generated by the Agentic AI platform.\n\n"
+        readme_content += "## Architecture\n\n"
+        readme_content += f"```json\n{json.dumps(self.project_state.get('architecture', {}), indent=2)}\n```\n\n"
+        readme_content += "## Files\n\n"
+        for f in codebase['files']:
+            readme_content += f"- `{f}`\n"
+        return readme_content
+
     async def _evolve_solution(self, solution: Dict[str, Any]) -> Dict[str, Any]:
-        """Use OpenEvolve to optimize the solution"""
-        # Implementation would integrate with OpenEvolve
-        # This is a placeholder for the evolutionary optimization
-        logger.info("Evolution phase - optimizing solution")
+        """Use an LLM to suggest and apply improvements."""
+        logger.info("Starting solution evolution phase.")
+        if not self.config.get("enable_evolution", False):
+            logger.info("Evolution is disabled. Skipping.")
+            return solution
+
+        improvements = await self._generate_improvements(solution)
         
-        evolution_cycles = 3
-        current_solution = solution
+        # For now, we'll just log the improvements.
+        # A full implementation would use OpenHands to apply them.
+        logger.info(f"Generated improvements:\n{json.dumps(improvements, indent=2)}")
         
-        for cycle in range(evolution_cycles):
-            # Evaluate current solution
-            score = await self._calculate_quality_score(current_solution)
-            
-            if score >= self.config["quality_threshold"]:
-                break
-            
-            # Generate variations and improvements
-            improved_solution = await self._generate_improvements(current_solution)
-            current_solution = improved_solution
-        
-        return current_solution
-    
+        solution["improvements"] = improvements
+        return solution
+
     async def _deploy_application(self, solution: Dict[str, Any], target: DeploymentTarget) -> Dict[str, Any]:
-        """Deploy the application to the specified target"""
-        deployment_agent = self.specialized_agents["devops"]
-        
-        deployment_task = f"Deploy application to {target.value}"
-        deployment_result = await deployment_agent.execute_task(
-            deployment_task,
-            context={
-                "solution": solution,
-                "target": target.value
-            }
-        )
-        
-        return deployment_result
+        """Prepare application for deployment."""
+        logger.info(f"Preparing deployment for target: {target.value}")
+
+        if target == DeploymentTarget.DOCKER:
+            dockerfile_content = self._generate_dockerfile(solution)
+            solution["files"]["Dockerfile"] = dockerfile_content
+            logger.info("Generated Dockerfile.")
+
+        # In a real scenario, this would trigger a CI/CD pipeline
+        # For now, we return the solution with deployment artifacts
+        deployment_info = {
+            "status": "ready_for_deployment",
+            "target": target.value,
+            "url": f"http://localhost:3000/{self.project_state['requirements'].description.replace(' ', '-').lower()}",
+            "files": list(solution["files"].keys())
+        }
+        return deployment_info
     
+    def _generate_dockerfile(self, solution: Dict[str, Any]) -> str:
+        """Generates a basic Dockerfile based on the project."""
+        # This is a very basic heuristic. A real implementation would be more robust.
+        if "package.json" in solution["files"]: # NodeJS
+            return """
+FROM node:18-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD [ "node", "index.js" ]
+"""
+        elif "requirements.txt" in solution["files"]: # Python
+            return """
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD [ "python", "main.py" ]
+"""
+        else:
+            return "# Could not determine project type to generate Dockerfile."
+
     async def _calculate_quality_score(self, solution: Dict[str, Any]) -> float:
-        """Calculate quality score for the solution"""
+        """Calculate a quality score for the generated solution."""
         # Implement quality metrics calculation
         # This would include code quality, test coverage, performance, security, etc.
         return 0.9  # Placeholder
@@ -422,150 +437,137 @@ class MasterOrchestrator:
         }
 
 # Specialized Agent Classes
+class CustomEncoder(json.JSONEncoder):
+    def default(self, o):
+        if is_dataclass(o):
+            return asdict(o)
+        if isinstance(o, Enum):
+            return o.value
+        return super().default(o)
+
 class BaseSpecializedAgent:
-    """Base class for specialized agents"""
+    """Base class for all specialized agents"""
     
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         self.llm_client = llm_client
-        self.agent_type = "base"
-    
+
     async def execute_task(self, task_description: str, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute a specific task"""
+        """Execute a task using the LLM"""
         prompt = self._build_prompt(task_description, context)
         
-        response = self.llm_client.chat.completions.create(
+        response = await self.llm_client.chat.completions.create(
             model="devstral-small-agentic",
             messages=[
                 {"role": "system", "content": self._get_system_prompt()},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.1,
-            max_tokens=2000
+            ]
         )
-        
-        return {
-            "task": task_description,
-            "agent": self.agent_type,
-            "result": response.choices[0].message.content,
-            "status": "completed"
-        }
-    
+        return json.loads(response.choices[0].message.content)
+
     def _get_system_prompt(self) -> str:
-        """Get system prompt for the agent"""
-        return f"You are a specialized {self.agent_type} development agent."
-    
+        raise NotImplementedError
+
     def _build_prompt(self, task: str, context: Dict[str, Any]) -> str:
-        """Build task-specific prompt"""
-        return f"Task: {task}\nContext: {json.dumps(context, indent=2)}"
+        """Build a detailed prompt for the LLM"""
+        return f"""
+        Task: {task}
+        Context: {json.dumps(context, indent=2, cls=CustomEncoder)}
+        """
 
 class FrontendAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "frontend"
     
     def _get_system_prompt(self) -> str:
-        return """You are a frontend development specialist. You excel at:
-        - Modern React/Vue/Angular development
-        - Responsive UI/UX design
-        - State management (Redux, Zustand, Pinia)
-        - CSS frameworks (Tailwind, Material-UI, Bootstrap)
-        - Frontend build tools (Vite, Webpack, Parcel)
-        - Frontend testing (Jest, Cypress, Playwright)
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: frontend
+        You are an expert frontend developer. Your goal is to create high-quality,
+        maintainable, and responsive user interfaces based on the given requirements.
         """
 
 class BackendAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "backend"
     
     def _get_system_prompt(self) -> str:
-        return """You are a backend development specialist. You excel at:
-        - API design and development (REST, GraphQL, gRPC)
-        - Framework expertise (FastAPI, Django, Express, Spring)
-        - Authentication and authorization
-        - Database integration and optimization
-        - Caching strategies (Redis, Memcached)
-        - Message queues (RabbitMQ, Kafka)
-        - Microservices architecture
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: backend
+        You are an expert backend developer. Your goal is to create robust, scalable,
+        and secure server-side applications and APIs.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 class DatabaseAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "database"
     
     def _get_system_prompt(self) -> str:
-        return """You are a database specialist. You excel at:
-        - Database design and normalization
-        - SQL and NoSQL databases (PostgreSQL, MongoDB, Redis)
-        - Database migrations and versioning
-        - Query optimization and indexing
-        - Database security and backup strategies
-        - Data modeling and relationships
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: database
+        You are an expert database administrator. Your goal is to design, implement,
+        and maintain efficient and secure database schemas.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 class DevOpsAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "devops"
     
     def _get_system_prompt(self) -> str:
-        return """You are a DevOps specialist. You excel at:
-        - Containerization (Docker, Podman)
-        - Orchestration (Kubernetes, Docker Swarm)
-        - CI/CD pipelines (GitHub Actions, GitLab CI, Jenkins)
-        - Infrastructure as Code (Terraform, Ansible)
-        - Cloud platforms (AWS, GCP, Azure)
-        - Monitoring and logging (Prometheus, Grafana, ELK)
-        - Security and compliance
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: devops
+        You are an expert DevOps engineer. Your goal is to automate the build, test,
+        and deployment pipeline to ensure continuous integration and delivery.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 class TestingAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "testing"
     
     def _get_system_prompt(self) -> str:
-        return """You are a testing specialist. You excel at:
-        - Test strategy and planning
-        - Unit testing frameworks (Jest, PyTest, JUnit)
-        - Integration testing
-        - End-to-end testing (Cypress, Selenium, Playwright)
-        - API testing (Postman, Insomnia, REST Assured)
-        - Performance testing (JMeter, k6)
-        - Test automation and CI integration
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: testing
+        You are an expert QA engineer. Your goal is to ensure the quality of the
+        application by writing and executing unit, integration, and end-to-end tests.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 class SecurityAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "security"
     
     def _get_system_prompt(self) -> str:
-        return """You are a security specialist. You excel at:
-        - Security auditing and vulnerability assessment
-        - OWASP Top 10 compliance
-        - Authentication and authorization best practices
-        - Data encryption and protection
-        - Security testing and penetration testing
-        - Secure coding practices
-        - Compliance frameworks (SOC2, ISO 27001)
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: security
+        You are a cybersecurity expert. Your goal is to identify and mitigate
+        security vulnerabilities in the application and infrastructure.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 class UIUXAgent(BaseSpecializedAgent):
-    def __init__(self, llm_client: OpenAI):
+    def __init__(self, llm_client: AsyncOpenAI):
         super().__init__(llm_client)
         self.agent_type = "ui_ux"
     
     def _get_system_prompt(self) -> str:
-        return """You are a UI/UX design specialist. You excel at:
-        - User experience design principles
-        - Information architecture
-        - Wireframing and prototyping
-        - Design systems and component libraries
-        - Accessibility (WCAG) compliance
-        - User research and testing
-        - Design tools integration (Figma, Sketch)
+        """Get system prompt for the agent"""
+        return """AGENT_TYPE: ui_ux
+        You are an expert UI/UX designer. Your goal is to create intuitive,
+        user-friendly, and visually appealing user interfaces.
+        
+        Provide your output as a JSON object with a "files" key, where each key
         """
 
 # Main execution function
