@@ -1,7 +1,0 @@
-max_concurrent_agents: 5
-timeout_minutes: 120
-retry_attempts: 3
-quality_threshold: 0.85
-enable_evolution: true
-enable_testing: true
-enable_security_scan: true 
