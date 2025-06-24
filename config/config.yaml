@@ -1,0 +1,131 @@
+
+
+# Database Configuration
+database:
+  # PostgreSQL connection URI
+  uri: "postgresql://username:password@localhost:5432/agentic_platform"
+
+  # Database pool settings
+  pool_size: 5
+  max_overflow: 10
+
+  # Schema and migration settings
+  schema: "public"
+  migrations_path: "src/infrastructure/migrations"
+
+# System Configuration
+system:
+  logging:
+    level: INFO
+    file_path: logs/app.log
+    max_bytes: 10485760  # 10MB
+    backup_count: 3
+    rotation: "midnight"
+    retention_days: 30
+
+    api_endpoint: "https://api.example.com/logs"
+
+    error_handling:
+      retry_attempts: 3
+      retry_delay: 5
+      max_retry_delay: 60
+
+    allowed_levels: [DEBUG, INFO, WARNING, ERROR, CRITICAL]
+
+# API Gateway Configuration
+api_gateway:
+  host: "localhost"
+  port: 8000
+  debug: false
+
+  # Authentication settings
+  jwt_secret_key: "your_jwt_secret_key_here"
+  jwt_algorithm: "HS256"
+  access_token_expire_minutes: 30
+
+# Agent Coordination Configuration
+agent_coordination:
+  # Timeout settings for different agent types (in seconds)
+  timeout_settings:
+    backend_timeout: 300
+    database_timeout: 600
+    frontend_timeout: 120
+    testing_timeout: 180
+
+  # Retry policies for failed tasks
+  retry_policies:
+    max_retries: 3
+    backoff_factor: 2
+
+  # Maximum concurrent tasks per agent type
+  concurrency_limits:
+    backend: 5
+    database: 2
+    frontend: 10
+    testing: 3
+
+# NLP Model Configuration (spaCy)
+nlp:
+  model_name: "en_core_web_sm"
+  preprocessing:
+    lower_case: true
+    remove_special_chars: true
+    remove_numbers: true
+  entity_recognition:
+    enabled: true
+    exclude_labels: []
+  dependency_parsing:
+    enabled: true
+
+# RabbitMQ Configuration
+rabbitmq:
+  host: "localhost"
+  port: 5672
+  username: "guest"
+  password: "guest"
+  queue_name: "agentic_tasks"
+
+# Redis Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+# Task Decomposer Configuration
+task_decomposer:
+  max_depth: 5
+  granularity: "medium"
+  parallel_tasks: true
+
+# Master Orchestrator Configuration
+master_orchestrator:
+  heartbeat_interval: 60
+  max_pending_tasks: 100
+  task_polling_interval: 5
+
+  # Code Aggregation Configuration
+
+code_aggregator:
+  # File monitoring patterns (regex)
+  file_monitoring_patterns:
+    - '^\w[\w/-]*\.(py|js|ts)$'
+    - '^src/.*\.py$'
+
+  # Conflict resolution strategy
+  conflict_resolution: latest  # Options: latest, merge
+
+  # Code quality thresholds
+  quality_thresholds:
+    complexity: 10            # Maximum allowed complexity score
+    line_length: 120         # Maximum allowed line length
+    function_lines: 50       # Maximum lines per function
+    doc_coverage: 80         # Minimum documentation coverage percentage
+
+  # Logging configuration
+  logging:
+    level: INFO              # Log level (DEBUG, INFO, WARNING, ERROR)
+    file: logs/code_aggregator.log  # Log file path
+
+  # Performance settings
+  max_concurrent_changes: 5   # Maximum number of concurrent changes to process
+

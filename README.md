@@ -1,379 +1,162 @@
-# **Agentic AI Full-Stack Tech Company Design Documents**
+# Agentic AI Development Platform
 
-## **Table of Contents**
+A next-generation platform for automated, intelligent software development.
 
-1. [Project Overview](#1-project-overview)
-2. [System Architecture](#2-system-architecture)
-   - [High-Level System Flow](#21-high-level-system-flow)
-3. [Component Descriptions](#3-component-descriptions)
-   - [3.1 Master Orchestrator](#31-master-orchestrator)
-   - [3.2 Specialized Agents](#32-specialized-agents)
-     - [Frontend Agent](#frontend-agent)
-     - [Backend Agent](#backend-agent)
-     - [Database Agent](#database-agent)
-     - [DevOps Agent](#devops-agent)
-     - [Testing Agent](#testing-agent)
-   - [3.3 Evolution Engine](#33-evolution-engine)
-   - [3.4 User Interface](#34-user-interface)
-   - [3.5 API Gateway](#35-api-gateway)
-   - [3.6 CLI Tool](#36-cli-tool)
-4. [Detailed Component Flows](#4-detailed-component-flows)
-   - [Master Orchestrator Flow](#master-orchestrator-flow)
-   - [Frontend Agent Flow](#frontend-agent-flow)
-   - [Backend Agent Flow](#backend-agent-flow)
-   - [Database Agent Flow](#database-agent-flow)
-   - [DevOps Agent Flow](#devops-agent-flow)
-   - [Testing Agent Flow](#testing-agent-flow)
-   - [Evolution Engine Flow](#evolution-engine-flow)
-5. [Sequence Diagrams](#5-sequence-diagrams)
-   - [Overall System Sequence](#overall-system-sequence)
-6. [Deployment Architecture](#6-deployment-architecture)
-7. [Data Models](#7-data-models)
-8. [Conclusion](#8-conclusion)
+## Overview
 
----
+The Agentic AI Development Platform is an innovative system designed to automate and optimize the software development process. It leverages advanced NLP techniques and evolutionary algorithms to generate high-quality code based on user requirements.
 
-## **1. Project Overview**
+Key features:
+- Intelligent code generation using evolutionary algorithms
+- Specialized agents for frontend, backend, database, and testing
+- Master orchestrator for coordinating complex development tasks
+- Evolution engine for continuous code optimization
 
-The goal is to create an autonomous AI-powered tech company capable of generating, deploying, and managing complete SaaS applications based on natural language requirements. The system combines agentic AI, evolutionary coding, and local inference to deliver production-ready applications.
+## Getting Started
 
----
+### Prerequisites
 
-## **2. System Architecture**
+- Python 3.11 or higher
+- Docker (for local development)
+- Node.js 18+ (for frontend components)
 
-### **2.1 High-Level System Flow**
+### Installation
 
-```mermaid
-flowchart TD
-    UserInput((User Requirements)) -->|Natural Language| MasterOrchestrator
-    MasterOrchestrator -->|Tasks| SpecializedAgents
-    SpecializedAgents -->|Code Artifacts| EvolutionEngine
-    EvolutionEngine -->|Optimized Code| DeploymentPipeline
-    DeploymentPipeline -->|Deploy| CloudInfrastructure
-    UserAccess((User Access)) -->|Interact| DeployedApplication
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-organization/agentic-platform.git
+   cd agentic-platform
+   ```
+
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   ```
+
+3. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### Quick Start
+
+The easiest way to start the platform is using the startup script:
+
+```bash
+python start_platform.py
 ```
 
-**Description:**
+This script will:
+- Check all dependencies
+- Start database services using Docker
+- Initialize the database schema
+- Start the main platform application
 
-- **User Input**: Users provide natural language requirements through the web interface or CLI tool.
-- **Master Orchestrator**: Parses requirements and decomposes them into tasks.
-- **Specialized Agents**: Handle specific areas like frontend, backend, database, DevOps, and testing.
-- **Evolution Engine**: Optimizes the generated code using evolutionary algorithms.
-- **Deployment Pipeline**: Automates the deployment process to various targets.
-- **Deployed Application**: The final product that users can interact with.
+### Manual Setup
 
----
+If you prefer manual setup or need to customize the configuration:
 
-## **3. Component Descriptions**
+1. Start the database services:
+   ```bash
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
 
-### **3.1 Master Orchestrator**
+2. Start the platform:
+   ```bash
+   PYTHONPATH=. python -m src.main
+   ```
 
-Responsible for:
+### Running the Application
 
-- Parsing natural language requirements using NLP techniques.
-- Decomposing requirements into specific tasks.
-- Coordinating specialized agents.
-- Aggregating outputs from agents.
-- Initiating the Evolution Engine for code optimization.
+Once started, the platform provides several interfaces:
 
-**Technologies:**
+- **Main API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+- **Interactive API Explorer**: http://localhost:8000/redoc
+- **Database Admin (Adminer)**: http://localhost:8080
+- **Health Check**: http://localhost:8000/health
 
-- Python 3.11+
-- NLP Libraries (e.g., spaCy)
-- Asyncio for asynchronous operations
+### Authentication
 
-### **3.2 Specialized Agents**
+Default users for testing:
+- Username: `admin`, Password: `admin123`
+- Username: `developer`, Password: `dev123`
 
-Agents focused on specific domains:
+### Stopping the Platform
 
-#### **Frontend Agent**
-
-- **Responsibilities**:
-  - Generate frontend code (React with TypeScript).
-  - Integrate component libraries (Material-UI or Tailwind CSS).
-  - Automate responsive design.
-- **Technologies**:
-  - Node.js 18+
-  - React 18
-  - TypeScript
-
-#### **Backend Agent**
-
-- **Responsibilities**:
-  - Set up API frameworks (FastAPI).
-  - Implement business logic.
-  - Handle authentication and authorization.
-- **Technologies**:
-  - Python 3.11+
-  - FastAPI
-  - SQLAlchemy
-
-#### **Database Agent**
-
-- **Responsibilities**:
-  - Design and optimize database schemas.
-  - Manage migrations.
-  - Optimize queries.
-- **Technologies**:
-  - PostgreSQL
-  - Alembic for migrations
-
-#### **DevOps Agent**
-
-- **Responsibilities**:
-  - Containerize applications using Docker.
-  - Set up CI/CD pipelines.
-  - Implement Infrastructure as Code (Terraform).
-- **Technologies**:
-  - Docker
-  - GitHub Actions or GitLab CI
-  - Terraform
-
-#### **Testing Agent**
-
-- **Responsibilities**:
-  - Generate unit, integration, and E2E tests.
-  - Perform automated code reviews.
-  - Conduct security vulnerability scanning.
-- **Technologies**:
-  - Pytest
-  - Selenium for E2E testing
-  - Security tools like Bandit
-
-### **3.3 Evolution Engine**
-
-- Implements evolutionary algorithms to optimize code.
-- Fitness evaluators assess code based on performance, security, maintainability, and test coverage.
-- Applies mutations to improve code quality.
-
-**Technologies:**
-
-- OpenEvolve framework
-- Custom mutation operators
-- Fitness evaluation metrics
-
-### **3.4 User Interface**
-
-#### **Web Interface**
-
-- **Features**:
-  - React-based dashboard.
-  - Real-time project monitoring.
-  - Interactive requirement specification.
-  - Deployment management interface.
-
-#### **User Interface Flow**
-
-```mermaid
-flowchart TD
-    User -->|Enter Requirements| WebInterface
-    WebInterface --> MasterOrchestrator
-    WebInterface <--|Progress Updates| MasterOrchestrator
-    User <--|View Updates| WebInterface
+To stop all services:
+```bash
+python start_platform.py --stop
 ```
 
-### **3.5 API Gateway**
-
-- Provides RESTful APIs for external integrations.
-- Supports WebSocket connections for real-time updates.
-- Handles authentication and rate limiting.
-
-### **3.6 CLI Tool**
-
-- Command-line interface for advanced users.
-- Supports project templates and scaffolding.
-- Allows batch processing capabilities.
-
----
-
-## **4. Detailed Component Flows**
-
-### **Master Orchestrator Flow**
-
-```mermaid
-flowchart TD
-    A[MasterOrchestrator] -->|Parse Requirements| B[Requirements Parsing]
-    B -->|Decompose Tasks| C[Task Decomposition]
-    C -->|Coordinate Agents| D[Agent Coordination]
-    D -->|Aggregate Outputs| E[Result Aggregation]
-    E -->|Initiate Optimization| F[Evolution Engine]
+Or manually:
+```bash
+docker-compose -f docker-compose.dev.yml down
 ```
 
-### **Frontend Agent Flow**
+## Project Structure
 
-```mermaid
-flowchart TD
-    A[Frontend Agent] -->|Receive Tasks| B[Task Queue]
-    B -->|Generate Code| C[Code Generation]
-    C -->|Integrate Components| D[Component Integration]
-    D -->|Produce Artifacts| E[Frontend Code]
-    E -->|Submit to Orchestrator| F[MasterOrchestrator]
+```
+agentic-platform/
+├── config/                # Configuration files
+│   └── config.yaml        # Main configuration file
+├── docs/                  # Documentation
+├── src/                   # Source code
+│   ├── agents/            # Specialized development agents
+│   ├── architecture/      # Core orchestration components
+│   ├── infrastructure/     # Infrastructure services
+│   ├── ui-interfaces/    # User interface components
+│   └── __init__.py        # Python package initialization
+├── docker-compose.dev.yml  # Docker Compose configuration for development
+├── requirements.txt       # Python dependencies
+└── README.md             # Project documentation
 ```
 
-### **Backend Agent Flow**
+## Usage
 
-```mermaid
-flowchart TD
-    A[Backend Agent] -->|Receive Tasks| B[Task Queue]
-    B -->|Setup Framework| C[FastAPI Setup]
-    C -->|Implement Logic| D[Business Logic]
-    D -->|Configure Auth| E[Authentication/Authorization]
-    E -->|Produce Artifacts| F[Backend Code]
-    F -->|Submit to Orchestrator| G[MasterOrchestrator]
+1. **Project Initialization**:
+   - Use the CLI tool to create a new project:
+     ```bash
+     python src/development/cli_tool.py init --name "My Project" --description "A brief description"
+     ```
+
+2. **Code Generation**:
+   - Through the web interface, provide requirements and let the system generate code
+   - The platform will automatically handle frontend, backend, database, and testing code
+
+3. **Evolution Engine**:
+   - Generated code is continuously optimized through evolutionary algorithms
+   - View optimization history in the "Evolution" tab of the dashboard
+
+4. **Testing**:
+   - Automated tests are generated alongside implementation code
+   - Run tests using:
+     ```bash
+     pytest src/ --cov=src --cov-report=html
+     ```
+
+## Configuration
+
+The platform uses a centralized configuration system based on `config/config.yaml`. You can override default settings by:
+
+1. Creating a local config file: `cp config/config.example.yaml config/config.local.yaml`
+2. Modifying the values in `config/local.yaml`
+
+Environment variables can also be used for sensitive data:
+```bash
+export DATABASE_URI="postgresql://user:password@localhost/agentic_platform"
 ```
 
-### **Database Agent Flow**
+## Contributing
 
-```mermaid
-flowchart TD
-    A[Database Agent] -->|Receive Tasks| B[Task Queue]
-    B -->|Design Schema| C[Schema Design]
-    C -->|Optimize Schema| D[Optimization]
-    D -->|Manage Migrations| E[Migrations]
-    E -->|Produce Artifacts| F[Database Scripts]
-    F -->|Submit to Orchestrator| G[MasterOrchestrator]
-```
+Contributions are welcome! Please follow these guidelines:
 
-### **DevOps Agent Flow**
+1. Create a feature branch (`git checkout -b feature/your-feature`)
+2. Commit your changes (`git commit -am 'Add some feature'`)
+3. Push to the branch (`git push origin feature/your-feature`)
+4. Open a Pull Request
 
-```mermaid
-flowchart TD
-    A[DevOps Agent] -->|Receive Tasks| B[Task Queue]
-    B -->|Containerize Application| C[Dockerization]
-    C -->|Setup CI/CD| D[CI/CD Pipeline]
-    D -->|Configure IaC| E[Infrastructure as Code]
-    E -->|Produce Artifacts| F[DevOps Configurations]
-    F -->|Submit to Orchestrator| G[MasterOrchestrator]
-```
+## License
 
-### **Testing Agent Flow**
-
-```mermaid
-flowchart TD
-    A[Testing Agent] -->|Receive Tasks| B[Task Queue]
-    B -->|Generate Tests| C[Test Generation]
-    C -->|Perform Code Review| D[Code Review]
-    D -->|Conduct Security Scan| E[Security Scanning]
-    E -->|Produce Artifacts| F[Test Suites]
-    F -->|Submit to Orchestrator| G[MasterOrchestrator]
-```
-
-### **Evolution Engine Flow**
-
-```mermaid
-flowchart TD
-    A[Evolution Engine] -->|Receive Artifacts| B[Code Artifacts]
-    B -->|Evaluate Fitness| C[Fitness Evaluators]
-    C -->|Apply Mutations| D[Mutation Operators]
-    D -->|Select Fittest| E[Selection Process]
-    E -->|Iterate or Output| F[Optimized Code]
-    F -->|Return to Orchestrator| G[MasterOrchestrator]
-```
-
----
-
-## **5. Sequence Diagrams**
-
-### **Overall System Sequence**
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant WebInterface
-    participant MasterOrchestrator
-    participant Agents
-    participant EvolutionEngine
-    participant DeploymentPipeline
-    participant CloudInfrastructure
-
-    User->>WebInterface: Enter Requirements
-    WebInterface->>MasterOrchestrator: Submit Requirements
-    MasterOrchestrator->>Agents: Distribute Tasks
-    Agents-->>MasterOrchestrator: Submit Code Artifacts
-    MasterOrchestrator->>EvolutionEngine: Send Artifacts
-    EvolutionEngine->>EvolutionEngine: Optimize Code
-    EvolutionEngine-->>MasterOrchestrator: Return Optimized Code
-    MasterOrchestrator->>DeploymentPipeline: Initiate Deployment
-    DeploymentPipeline->>CloudInfrastructure: Deploy Application
-    User->>WebInterface: Access Deployed Application
-```
-
----
-
-## **6. Deployment Architecture**
-
-```mermaid
-flowchart LR
-    subgraph UserInterfaceLayer
-        WebInterface
-        CLI_Tool
-    end
-    subgraph ApplicationLayer
-        MasterOrchestrator
-        SpecializedAgents
-        EvolutionEngine
-    end
-    subgraph InfrastructureLayer
-        LocalAI[Local AI Infrastructure]
-        Database[PostgreSQL Database]
-        Cache[Redis Cache]
-    end
-    subgraph DeploymentLayer
-        CI_CD[CI/CD Pipeline]
-        ContainerRegistry
-        CloudProvider
-    end
-
-    UserInterfaceLayer --> ApplicationLayer
-    ApplicationLayer -->|Utilizes| InfrastructureLayer
-    ApplicationLayer --> DeploymentLayer
-    DeploymentLayer -->|Deploys To| CloudProvider[Cloud Infrastructure]
-```
-
-**Notes:**
-
-- **Local AI Infrastructure**: Houses AI models and handles inference locally.
-- **Cloud Provider**: Supports deployment targets like AWS, GCP, or Azure.
-- **CI/CD Pipeline**: Automates building, testing, and deploying applications.
-
----
-
-## **7. Data Models**
-
-### **7.1 Requirement Model**
-
-```mermaid
-classDiagram
-    class SaaSRequirements {
-        +string description
-        +ProjectType project_type
-        +list~string~ features
-        +TechStackPreferences tech_stack_preferences
-        +DeploymentTarget deployment_target
-    }
-
-    class TechStackPreferences {
-        +string frontend
-        +string backend
-        +string database
-    }
-```
-
-### **7.2 Task Model**
-
-```mermaid
-classDiagram
-    class AgentTask {
-        +string agent_type
-        +string description
-        +list~string~ dependencies
-        +int priority
-        +int estimated_time
-    }
-```
-
----
-
-## **8. Conclusion**
-
-This design document provides a comprehensive overview of the Agentic AI Full-Stack Tech Company's system architecture, components, data flows, and interactions. The diagrams illustrate both the overall system flow and the detailed operations of each individual component. This should serve as a solid foundation for development, testing, and deployment phases.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
