@@ -1,0 +1,27 @@
+{
+  "name": "@pseudo-business/api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway for Pseudo Business application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Test not implemented\" && exit 0"
+  },
+  "dependencies": {
+    "@fastify/cors": "^8.3.0",
+    "@fastify/helmet": "^11.0.2",
+    "@fastify/jwt": "^7.4.0",
+    "@fastify/rate-limit": "^7.4.0",
+    "fastify": "^4.25.2",
+    "pino": "^8.17.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.3.3",
+    "tsup": "^8.0.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.1.1"
+  }
+}

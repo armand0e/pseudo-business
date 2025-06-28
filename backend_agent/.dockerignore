@@ -1,0 +1,42 @@
+# Ignore Python cache files
+__pycache__
+
+# Ignore virtual environment directories
+venv
+env
+
+# Ignore test databases
+*.db
+
+# Ignore logs
+*.log
+
+# Ignore IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore Docker-specific files
+Dockerfile
+.dockerignore
+
+# Ignore environment files
+.env
+
+# Ignore git-related files
+.git
+.gitignore
+
+# Ignore build artifacts
+build/
+dist/
+
+# Ignore Python bytecode
+*.pyc
+*.pyo
+
+# Ignore virtualenv directories
+venv/
+ENV/
+env.bak/
