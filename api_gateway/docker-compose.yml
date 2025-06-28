@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MASTER_ORCHESTRATOR_URL=http://master-orchestrator:8000
+      - BACKEND_AGENT_URL=http://backend-agent:8001
+      - DATABASE_AGENT_URL=http://database-agent:8002
+    depends_on:
+      - redis
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - agentic-ai-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - agentic-ai-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Placeholder services for backend components
+  # These should be replaced with actual service configurations
+  master-orchestrator:
+    image: placeholder/master-orchestrator:latest
+    ports:
+      - "8000:8000"
+    networks:
+      - agentic-ai-network
+    # Configuration will depend on actual implementation
+
+  backend-agent:
+    image: placeholder/backend-agent:latest
+    ports:
+      - "8001:8001"
+    networks:
+      - agentic-ai-network
+    # Configuration will depend on actual implementation
+
+  database-agent:
+    image: placeholder/database-agent:latest
+    ports:
+      - "8002:8002"
+    networks:
+      - agentic-ai-network
+    # Configuration will depend on actual implementation
+
+volumes:
+  redis-data:
+    driver: local
+
+networks:
+  agentic-ai-network:
+    driver: bridge
+    name: agentic-ai-network
