@@ -35,6 +35,9 @@ The **Master Orchestrator** is the central component responsible for coordinatin
 #### **1.3.1 High-Level Architecture Diagram**
 
 ```mermaid
+---
+id: bbce45f4-663f-409f-923b-2fc34702daf9
+---
 flowchart TD
     UserInput((User Requirements)) -->|Natural Language| Orchestrator[Master Orchestrator]
     Orchestrator -->|Task Decomposition| TaskQueue
