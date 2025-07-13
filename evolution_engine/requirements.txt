@@ -1,1 +1,3 @@
 astor
+fastapi
+uvicorn[standard]

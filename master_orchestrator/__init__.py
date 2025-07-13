@@ -1,8 +1,3 @@
-"""
-Master Orchestrator for Agentic AI Development Platform.
+"""Master Orchestrator module for coordinating AI agents."""
 
-This module provides the core orchestration functionality for processing user requirements,
-decomposing them into tasks, coordinating specialized agents, and managing the code generation pipeline.
-"""
-
-__version__ = "0.1.0"
+__version__ = "1.0.0"

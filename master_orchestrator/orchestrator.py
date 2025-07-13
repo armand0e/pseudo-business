@@ -13,6 +13,7 @@ from master_orchestrator.agent_coordinator import AgentCoordinator
 from master_orchestrator.code_aggregator import CodeAggregator
 from master_orchestrator.error_handler import ErrorHandler
 from master_orchestrator.constants import TechStackPreferences
+from evolution_engine.evolution_engine import EvolutionEngine
 
 class MasterOrchestrator:
     """
@@ -34,6 +35,7 @@ class MasterOrchestrator:
         self.code_aggregator = CodeAggregator()
         self.error_handler = ErrorHandler()
         self.tech_stack_preferences = TechStackPreferences()
+        self.evolution_engine = EvolutionEngine(codebase="")  # Placeholder for actual codebase
 
     def process_requirements(self, text: str) -> Dict[str, Any]:
         """
@@ -68,10 +70,22 @@ class MasterOrchestrator:
             # Step 5: Merge artifacts into a cohesive codebase
             codebase_path = self.code_aggregator.merge_artifacts(artifacts)
 
+            # Step 6: Initiate optimization with EvolutionEngine
+            with open(codebase_path, 'r') as f:
+                initial_code = f.read()
+            
+            self.evolution_engine.codebase = initial_code
+            optimized_variant = self.evolution_engine.evolve()
+
+            with open(codebase_path, 'w') as f:
+                f.write(optimized_variant.code)
+
             return {
                 "codebase_path": codebase_path,
                 "tasks": tasks,
-                "artifacts": artifacts
+                "artifacts": artifacts,
+                "optimized": True,
+                "fitness": optimized_variant.fitness,
             }
 
         except Exception as e:

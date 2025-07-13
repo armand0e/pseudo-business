@@ -18,7 +18,7 @@ class NLPProcessor:
 
     def __init__(self):
         """Initialize the NLP processor with the spaCy model."""
-        self.nlp = spacy.load("en_core_web_lg")
+        self.nlp = spacy.load("en_core_web_sm")
 
     def parse(self, text: str) -> Dict[str, Any]:
         """

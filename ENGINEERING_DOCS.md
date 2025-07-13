@@ -987,7 +987,7 @@ classDiagram
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build
 
@@ -1024,7 +1024,7 @@ jobs:
         with:
           node-version: 18
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
       - name: Run Tests
         run: npm test
       - name: Build

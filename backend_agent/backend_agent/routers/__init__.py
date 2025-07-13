@@ -1,6 +1,5 @@
 """
-Routers package initializer
-"""
-from . import items, auth
+Backend Agent Routers
 
-__all__ = ["items", "auth"]
+API route handlers for the Backend Agent endpoints.
+"""

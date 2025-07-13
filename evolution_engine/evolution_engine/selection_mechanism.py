@@ -1,94 +1,55 @@
-"""
-Selection Mechanism - Selects the fittest code variants for the next generation.
-"""
-
-import logging
+from typing import List
 import random
-from typing import List, Tuple
-
-from .code_variant import CodeVariant
 
 class SelectionMechanism:
     """
-    The Selection Mechanism chooses the most optimal code variants
-    from a population based on their fitness scores.
+    Selects the fittest code variants for the next generation.
     """
 
-    def __init__(self):
-        """Initialize the Selection Mechanism."""
-        pass
-
-    def select(self, population: List[CodeVariant]) -> List[CodeVariant]:
+    def select(self, population: List['CodeVariant'], num_selections: int) -> List['CodeVariant']:
         """
-        Select a subset of the fittest code variants from the population.
+        Selects a subset of the population to be parents for the next generation.
 
         Args:
-            population: List of CodeVariant objects to select from.
+            population: The current population of code variants.
+            num_selections: The number of variants to select.
 
         Returns:
-            A list of selected CodeVariant objects.
+            A list of selected code variants.
         """
-        logging.debug(f"Selecting {len(population)} variants from population")
+        # Using tournament selection as a default strategy
+        return self._tournament_selection(population, num_selections)
 
-        # Sort by fitness score (descending)
-        sorted_population = sorted(population, key=lambda v: v.fitness_score.total_score, reverse=True)
-
-        # Use tournament selection to choose parents
-        selected_variants = []
-        for _ in range(len(sorted_population)):
-            winner = self._tournament_selection(sorted_population)
-            selected_variants.append(winner)
-
-        return selected_variants
-
-    def select_two(self, population: List[CodeVariant]) -> Tuple[CodeVariant, CodeVariant]:
+    def _roulette_wheel_selection(self, population: List['CodeVariant'], num_selections: int) -> List['CodeVariant']:
         """
-        Select two code variants for crossover.
-
-        Args:
-            population: List of CodeVariant objects to select from.
-
-        Returns:
-            A tuple containing two selected CodeVariant objects.
+        Selects variants using roulette wheel selection.
         """
-        logging.debug("Selecting two parents for crossover")
-        parent1 = self._tournament_selection(population)
-        parent2 = self._tournament_selection(population)
+        # TODO: Implement roulette wheel selection
+        # This is a placeholder and will just return a random sample
+        return random.sample(population, min(num_selections, len(population)))
 
-        return parent1, parent2
-
-    def _tournament_selection(self, population: List[CodeVariant]) -> CodeVariant:
+    def _tournament_selection(self, population: List['CodeVariant'], num_selections: int, tournament_size: int = 5) -> List['CodeVariant']:
         """
-        Perform tournament selection to choose a single code variant.
-
-        Args:
-            population: List of CodeVariant objects to select from.
-
-        Returns:
-            The selected CodeVariant object.
+        Selects variants using tournament selection.
         """
-        tournament_size = min(5, len(population))
-        tournament = random.sample(population, tournament_size)
-        return max(tournament, key=lambda v: v.fitness_score.total_score)
+        selected = []
+        if not population:
+            return selected
+            
+        for _ in range(num_selections):
+            tournament = random.sample(population, min(tournament_size, len(population)))
+            # Assumes the 'fitness' attribute is a dictionary with a 'total' score
+            winner = max(tournament, key=lambda x: x.fitness.get('total', 0))
+            selected.append(winner)
+        return selected
 
-    def _roulette_wheel_selection(self, population: List[CodeVariant]) -> CodeVariant:
+    def _elitism(self, population: List['CodeVariant'], num_elites: int) -> List['CodeVariant']:
         """
-        Perform roulette wheel selection to choose a single code variant.
-
-        Args:
-            population: List of CodeVariant objects to select from.
-
-        Returns:
-            The selected CodeVariant object.
+        Selects the top-performing variants (elitism).
         """
-        total_fitness = sum(v.fitness_score.total_score for v in population)
-        pick = random.uniform(0, total_fitness)
-
-        current = 0
-        for variant in population:
-            current += variant.fitness_score.total_score
-            if current > pick:
-                return variant
-
-        # In case of rounding errors
-        return population[-1]
+        if not population:
+            return []
+            
+        # Sort population by fitness score in descending order
+        sorted_population = sorted(population, key=lambda x: x.fitness.get('total', 0), reverse=True)
+        return sorted_population[:num_elites]

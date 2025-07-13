@@ -1,66 +1,20 @@
-"""
-Code Variant - Represents an individual in the evolution population.
-"""
-
-import copy
-import random
-from dataclasses import dataclass, field
-
-@dataclass
-class FitnessScore:
-    """
-    Represents a fitness score for a code variant.
-
-    Attributes:
-        performance_score: Score for performance (0-1)
-        security_score: Score for security (0-1)
-        maintainability_score: Score for maintainability (0-1)
-        test_coverage_score: Score for test coverage (0-1)
-        total_score: Combined score from all metrics
-    """
-    performance_score: float = 0.0
-    security_score: float = 0.0
-    maintainability_score: float = 0.0
-    test_coverage_score: float = 0.0
-    total_score: float = 0.0
+from typing import Dict
 
 class CodeVariant:
     """
-    Represents a code variant in the evolution population.
+    Represents an individual code variant within the population.
     """
 
-    def __init__(self, codebase: str):
-        """Initialize a new code variant."""
-        self.codebase = codebase
-        self.fitness_score = FitnessScore()
-
-    def clone(self) -> 'CodeVariant':
+    def __init__(self, code: str, fitness: Dict[str, float] = None):
         """
-        Create a deep copy of this code variant.
-
-        Returns:
-            A new CodeVariant with the same code and fitness score.
-        """
-        return copy.deepcopy(self)
-
-    def crossover(self, other: 'CodeVariant') -> 'CodeVariant':
-        """
-        Perform crossover between two code variants to create a child.
+        Initializes a new CodeVariant.
 
         Args:
-            other: The parent code variant to cross with.
-
-        Returns:
-            A new CodeVariant that combines elements from both parents.
+            code: The source code of the variant.
+            fitness: The fitness scores of the variant.
         """
-        # Simple line-based crossover
-        lines1 = self.codebase.split('\n')
-        lines2 = other.codebase.split('\n')
+        self.code = code
+        self.fitness = fitness if fitness is not None else {}
 
-        # Choose a random crossover point
-        crossover_point = random.randint(0, min(len(lines1), len(lines2)))
-
-        # Create child with mixed content
-        child_lines = lines1[:crossover_point] + lines2[crossover_point:]
-
-        return CodeVariant('\n'.join(child_lines))
+    def __repr__(self):
+        return f"CodeVariant(fitness={self.fitness.get('total', 0):.4f})"

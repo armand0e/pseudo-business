@@ -1,12 +1,9 @@
-# Backend Agent dependencies
-
-fastapi>=0.78.0
-uvicorn[standard]>=0.17.6
-sqlalchemy>=1.4.39
-pydantic>=1.9.1
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-aiohttp>=3.8.1
-pytest>=7.2.0
-pytest-asyncio>=0.19.1
-httpx>=0.23.0
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+python-dotenv
+alembic
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]

@@ -1,39 +1,50 @@
-"""
-Test script for the Evolution Engine.
-"""
+import os
+import subprocess
 
-from evolution_engine import EvolutionEngine
-
-def main():
-    """
-    Test the Evolution Engine with a simple code example.
-    """
-    # Simple code to optimize
-    codebase = """
-def compute_sum(n):
-    result = 0
-    for i in range(n):
-        result += i
-    return result
-"""
-
-    print("Initial code:")
-    print(codebase)
-    print("\nStarting optimization...")
-
-    # Initialize the engine with a small population and few generations for testing
-    engine = EvolutionEngine(
-        population_size=5,
-        max_generations=3,
-        mutation_rate=0.8
-    )
-
-    # Optimize the code
-    best_variant = engine.optimize_code(codebase)
-
-    print("\nOptimized code:")
-    print(best_variant.codebase)
-    print(f"\nBest variant score: {best_variant.fitness_score.total_score:.4f}")
+def create_test_file():
+    """Creates a simple Python file for testing."""
+    content = """
+def inefficient_sum(numbers):
+    total = 0
+    for num in numbers:
+        total += num
+    return total
 
 if __name__ == "__main__":
-    main()
+    my_numbers = [1, 2, 3, 4, 5]
+    result = inefficient_sum(my_numbers)
+    print(f"The sum is: {result}")
+"""
+    with open("test_code.py", "w") as f:
+        f.write(content)
+
+def run_evolution_test():
+    """
+    Runs the evolution engine on the test file.
+    """
+    create_test_file()
+    
+    command = [
+        "python",
+        "-m",
+        "evolution_engine.cli",
+        "test_code.py",
+        "--population-size",
+        "10",
+        "--generations",
+        "5"
+    ]
+    
+    result = subprocess.run(command, capture_output=True, text=True)
+    
+    print("--- CLI Output ---")
+    print(result.stdout)
+    if result.stderr:
+        print("--- CLI Errors ---")
+        print(result.stderr)
+
+    # Clean up the test file
+    os.remove("test_code.py")
+
+if __name__ == "__main__":
+    run_evolution_test()
