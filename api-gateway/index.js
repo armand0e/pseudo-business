@@ -1,23 +1,31 @@
 require('dotenv').config();
 const fastify = require('fastify')({
-  logger: {
-    transport: {
-      prettyPrint: true
-    }
-  }
+  logger: true
 });
 const LoadBalancer = require('./loadBalancer');
-const swagger = require('fastify-swagger');
+const swagger = require('@fastify/swagger');
 
 // Register plugins
 async function registerPlugins() {
-  const plugins = [require('@fastify/cors'), require('@fastify/helmet'), require('fastify-jwt'), require('@fastify/rate-limit')];
-  for (const plugin of plugins) {
-    await fastify.register(plugin);
-  }
+  // Register CORS
+  await fastify.register(require('@fastify/cors'));
+  
+  // Register Helmet
+  await fastify.register(require('@fastify/helmet'));
+  
+  // Register JWT
+  await fastify.register(require('@fastify/jwt'), {
+    secret: process.env.JWT_SECRET || 'integration_test_secret'
+  });
+  
+  // Register Rate Limiting
+  await fastify.register(require('@fastify/rate-limit'), {
+    max: Number.parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
+    timeWindow: Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000
+  });
 
   // Register Swagger for API documentation
-  fastify.register(swagger, {
+  await fastify.register(swagger, {
     routePrefix: '/docs',
     swagger: {
       info: {
@@ -46,52 +54,13 @@ function configureSecurity() {
     }
   });
 
-  // Helmet configuration
-  fastify.register(require('@fastify/helmet'), {
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", 'data:'],
-        objectSrc: ["'none'"]
-      }
-    }
-  });
-
-  // Rate limiting
-  fastify.register(require('@fastify/rate-limit'), {
-    max: Number.parseInt(process.env.RATE_LIMIT_MAX, 10) || 100,
-    timeWindowMs: Number.parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000, // 15 minutes in milliseconds
-    skipOnHealthCheck: true,
-    allowList: [/localhost/, /127.0.0.1/]
-  });
+  // Note: Helmet and rate limiting are already registered in registerPlugins()
 }
 
 // Configure authentication
 function configureAuth() {
-  fastify.register(require('fastify-jwt'), {
-    secret: process.env.JWT_SECRET,
-    sign: {
-      expiresIn: '1d'
-    }
-  });
-
-  // JWT error handling
-  fastify.setErrorHandler((error, request, reply) => {
-    if (error instanceof fastify.auth.JWTErrors) {
-      switch (error.code) {
-        case 'Unauthorized':
-          return reply.send(401).send({ statusCode: 401, message: 'Unauthorized' });
-        case 'Forbidden':
-          return reply.send(403).send({ statusCode: 403, message: 'Forbidden' });
-        default:
-          return reply.send(401).send({ statusCode: 401, message: error.message });
-      }
-    }
-    // Forward to the next error handler
-    throw error;
-  });
+  // JWT is already registered in registerPlugins()
+  // JWT error handling will be done in the main error handler
 }
 
 // Configure routes with load balancing and API documentation
@@ -143,18 +112,21 @@ function configureRoutes() {
 // Configure monitoring and metrics
 function configureMonitoring() {
   // Basic logging for monitoring
-  fastify.addHook('onRequest', (request, reply) => {
-    const startHrtime = process.hrtime();
-    return (error, response) => {
-      if (!error && response.statusCode >= 500) {
-        fastify.log.error(`Request to ${request.url} failed with status code ${response.statusCode}`);
-      }
+  fastify.addHook('onRequest', async (request, reply) => {
+    request.startTime = process.hrtime();
+  });
 
-      const duration = process.hrtime(startHrtime);
-      fastify.log.info(
-        `Request: ${request.method} ${request.url} - Status: ${response.statusCode} - Duration: ${duration[0] * 1000 + Math.floor(duration[1] / 1000)}ms`
-      );
-    };
+  fastify.addHook('onResponse', async (request, reply) => {
+    const duration = process.hrtime(request.startTime);
+    const durationMs = duration[0] * 1000 + Math.floor(duration[1] / 1000000);
+    
+    if (reply.statusCode >= 500) {
+      fastify.log.error(`Request to ${request.url} failed with status code ${reply.statusCode}`);
+    }
+
+    fastify.log.info(
+      `Request: ${request.method} ${request.url} - Status: ${reply.statusCode} - Duration: ${durationMs}ms`
+    );
   });
 }
 
@@ -162,6 +134,13 @@ function configureMonitoring() {
 function configureErrorHandling() {
   fastify.setErrorHandler((error, request, reply) => {
     fastify.log.error(error);
+
+    // Handle JWT errors
+    if (error.code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED' ||
+        error.code === 'FST_JWT_AUTHORIZATION_TOKEN_INVALID' ||
+        error.code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER') {
+      return reply.status(401).send({ statusCode: 401, message: 'Unauthorized' });
+    }
 
     // Return different error codes based on the type of error
     if (error.statusCode) {
