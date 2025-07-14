@@ -1,0 +1,239 @@
+version: '3.8'
+
+services:
+  # API Gateway
+  api-gateway:
+    build:
+      context: ../../../../api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - JWT_SECRET=integration_test_secret
+      - RATE_LIMIT_MAX=1000
+      - RATE_LIMIT_WINDOW_MS=60000
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const http=require('http');http.get('http://127.0.0.1:3000/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Master Orchestrator
+  master-orchestrator:
+    build:
+      context: ../../../../master_orchestrator
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../../../master_orchestrator:/app
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend Agent
+  backend-agent:
+    build:
+      context: ../../../../backend_agent
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../../../../backend_agent:/app
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:postgres@database:5432/agentic_platform_test
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Database Agent
+  database-agent:
+    build:
+      context: ../../../../database_agent
+    ports:
+      - "8002:8002"
+    volumes:
+      - ../../../../database_agent:/app
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:postgres@database:5432/agentic_platform_test
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend Agent
+  frontend-agent:
+    build:
+      context: ../../../../frontend_agent
+    ports:
+      - "8003:8003"
+    volumes:
+      - ../../../../frontend_agent:/app
+    environment:
+      - PORT=8003
+      - NODE_ENV=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Testing Agent
+  testing-agent:
+    build:
+      context: ../../../../testing_agent
+    ports:
+      - "8004:8004"
+    volumes:
+      - ../../../../testing_agent:/app
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # DevOps Agent
+  devops-agent:
+    build:
+      context: ../../../../devops_agent
+    ports:
+      - "8005:8005"
+    volumes:
+      - ../../../../devops_agent:/app
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Evolution Engine
+  evolution-engine:
+    build:
+      context: ../../../../evolution_engine
+    ports:
+      - "8006:8006"
+    volumes:
+      - ../../../../evolution_engine:/app
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CLI Tool (Mock API for CLI Tool)
+  cli-tool:
+    build:
+      context: ../../../../cli_tool
+    ports:
+      - "8007:8007"
+    volumes:
+      - ../../../../cli_tool:/app
+    environment:
+      - PORT=8007
+      - NODE_ENV=test
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Interface
+  user-interface:
+    build:
+      context: ../../../../frontend_agent/src/user_interface
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../../../../frontend_agent/src/user_interface:/app
+    environment:
+      - PORT=3001
+      - NODE_ENV=test
+      - API_GATEWAY_URL=http://api-gateway:3000
+    networks:
+      - agentic-network
+    depends_on:
+      - api-gateway
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Database for testing
+  database:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=agentic_platform_test
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - agentic-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Mock server for external dependencies
+  mock-server:
+    image: mockserver/mockserver:latest
+    ports:
+      - "1080:1080"
+    environment:
+      - MOCKSERVER_INITIALIZATION_JSON_PATH=/config/mockserver-config.json
+    volumes:
+      - ./mockserver-config:/config
+    networks:
+      - agentic-network
+
+networks:
+  agentic-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

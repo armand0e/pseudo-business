@@ -1,0 +1,14 @@
+{
+  "basic_webapp": {
+    "text": "Create a simple todo list web application with React frontend and FastAPI backend. Include user authentication and task management features.",
+    "expected_components": ["frontend", "backend", "database", "authentication"]
+  },
+  "microservice": {
+    "text": "Build a microservice for user management with REST API endpoints for CRUD operations. Include proper error handling and validation.",
+    "expected_components": ["backend", "database", "api", "validation"]
+  },
+  "data_pipeline": {
+    "text": "Create a data processing pipeline that extracts data from CSV files, transforms it, and loads it into a PostgreSQL database. Include logging and error handling.",
+    "expected_components": ["data_extraction", "transformation", "database", "logging"]
+  }
+}

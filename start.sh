@@ -1,0 +1,2 @@
+docker-compose -f testing_agent/testing_agent/integration_tests/config/docker-compose.yml down --remove-orphans
+docker-compose -f testing_agent/testing_agent/integration_tests/config/docker-compose.yml up --build -d

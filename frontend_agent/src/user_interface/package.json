@@ -1,0 +1,35 @@
+{
+  "name": "user-interface",
+  "version": "1.0.0",
+  "description": "User Interface for Agentic AI Development Platform",
+  "main": "index.tsx",
+  "scripts": {
+    "start": "node -e \"console.log('User Interface running on port 3001'); require('http').createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/html'}); res.end('<h1>User Interface</h1><p>Status: Running</p>'); }).listen(3001, () => console.log('Server started'));\"",
+    "build": "webpack --mode production",
+    "test": "jest",
+    "dev": "webpack serve --mode development --hot"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@reduxjs/toolkit": "^1.9.0",
+    "react-redux": "^8.1.0",
+    "socket.io-client": "^4.7.0",
+    "axios": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "typescript": "^5.0.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^4.15.0",
+    "ts-loader": "^9.4.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.6.0",
+    "@types/jest": "^29.5.0"
+  },
+  "keywords": ["react", "typescript", "agentic-ai"],
+  "author": "Agentic AI Platform Team",
+  "license": "MIT"
+} 

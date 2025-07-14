@@ -1,0 +1,55 @@
+# Integration Testing Framework Requirements
+# Dependencies for comprehensive integration testing across all components
+
+# Core testing framework
+pytest>=7.4.0
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+
+# HTTP clients and networking
+requests>=2.31.0
+httpx>=0.24.0
+aiohttp>=3.8.0
+
+# Performance monitoring
+psutil>=5.9.0
+
+# Data processing and serialization
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Database connectivity
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.0
+alembic>=1.11.0
+
+# Configuration and environment
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# Containerization and deployment
+docker>=6.1.0
+docker-compose>=1.29.0
+
+# Reporting and visualization
+jinja2>=3.1.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Security testing
+bandit>=1.7.0
+safety>=2.3.0
+
+# Load testing
+locust>=2.15.0
+
+# Mocking and fixtures
+responses>=0.23.0
+faker>=19.0.0
+
+# Development tools
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.4.0

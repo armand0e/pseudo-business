@@ -1,0 +1,26 @@
+# Master Orchestrator Dependencies
+# Core FastAPI and async support
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+
+# Security and Authentication
+PyJWT==2.8.0
+python-multipart==0.0.6
+
+# Rate limiting
+slowapi==0.1.9
+
+# HTTP client for agent communication
+aiohttp==3.9.1
+
+# CORS support
+python-jose[cryptography]==3.3.0
+
+# Logging and monitoring (optional, for future enhancements)
+prometheus-client==0.19.0
+
+# Development and testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2

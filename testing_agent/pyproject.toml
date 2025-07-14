@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "testing_agent"
+version = "0.1.0"
+description = "Testing Agent for the Agentic AI Development Platform"
+requires-python = ">=3.11"
+readme = "README.md"
+
+[project.scripts]
+testing-agent = "testing_agent.cli:main"

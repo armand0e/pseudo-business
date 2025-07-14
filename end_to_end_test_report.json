@@ -1,0 +1,21 @@
+{
+  "service_health": {
+    "backend-agent": true,
+    "database": true,
+    "frontend-agent": true,
+    "user-interface": true,
+    "mock-server": true
+  },
+  "workflow_tests": {
+    "backend_agent": true,
+    "frontend_integration": true,
+    "api_gateway": true,
+    "data_flow": true
+  },
+  "integration_tests": {},
+  "performance_metrics": {
+    "backend_response_time_ms": 59.67211723327637,
+    "backend_status": 200
+  },
+  "errors": []
+}

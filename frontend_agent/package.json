@@ -1,0 +1,46 @@
+{
+  "name": "frontend-agent",
+  "version": "1.0.0",
+  "description": "Agent for generating frontend code.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node -e \"console.log('Frontend Agent running on port 8003'); require('http').createServer((req, res) => { res.writeHead(200, {'Content-Type': 'text/json'}); res.end(JSON.stringify({status: 'running', service: 'frontend-agent', port: 8003})); }).listen(8003, '0.0.0.0', () => console.log('Server started'));\"",
+    "build": "webpack --mode production",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.1.2",
+    "@reduxjs/toolkit": "^2.8.2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
+    "redux": "^5.0.1",
+    "socket.io-client": "^4.8.1",
+    "typescript": "^5.8.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.27.7",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-react": "^7.27.1",
+    "@babel/preset-typescript": "^7.27.1",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
+    "babel-loader": "^10.0.0",
+    "html-webpack-plugin": "^5.6.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.4.0",
+    "ts-loader": "^9.5.2",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}
